@@ -56,7 +56,10 @@ const getNotes = asyncHandler(
       : {};
 
     // Sorting
-    let sortOption = { createdAt: -1 };
+    let sortOption = {
+      isPinned: -1,
+      createdAt: -1
+    };
 
     if (req.query.sort === "oldest") {
       sortOption = { createdAt: 1 };

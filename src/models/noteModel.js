@@ -25,6 +25,11 @@ const noteSchema = new mongoose.Schema(
       default: "General"
     },
 
+    isPinned: {
+      type: Boolean,
+      default: false
+    },
+
     image: {
       type: String,
       default: ""
