@@ -30,6 +30,10 @@ const createNote = asyncHandler(
       category
     });
 
+    req.app
+      .get("io")
+      .emit("notesUpdated");
+
     res.status(201).json(note);
   }
 );
@@ -144,6 +148,10 @@ const updateNote = asyncHandler(
         }
       );
 
+    req.app
+      .get("io")
+      .emit("notesUpdated");
+
     res.status(200).json(updatedNote);
   }
 );
@@ -172,6 +180,10 @@ const deleteNote = asyncHandler(
     await Note.findByIdAndDelete(
       req.params.id
     );
+
+    req.app
+      .get("io")
+      .emit("notesUpdated");
 
     res.status(200).json({
       message:
