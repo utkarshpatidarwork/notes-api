@@ -39,7 +39,7 @@ const getNotes = asyncHandler(
     // Pagination
     const page = Number(req.query.page) || 1;
 
-    const limit = Number(req.query.limit) || 5;
+    const limit = Number(req.query.limit) || 100;
 
     const skip = (page - 1) * limit;
 
