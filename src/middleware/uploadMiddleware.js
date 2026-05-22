@@ -1,53 +1,35 @@
 const multer = require("multer");
 
-const path = require("path");
+const {
+  CloudinaryStorage
+} = require(
+  "multer-storage-cloudinary"
+);
 
-// Storage Config
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, "uploads/");
-  },
+const cloudinary = require(
+  "../config/cloudinary"
+);
 
-  filename(req, file, cb) {
-    cb(
-      null,
-      `${Date.now()}${path.extname(
-        file.originalname
-      )}`
-    );
-  }
-});
+// Cloudinary Storage
+const storage =
+  new CloudinaryStorage({
 
-// File Filter
-const fileFilter = (req, file, cb) => {
+    cloudinary,
 
-  const fileTypes =
-    /jpg|jpeg|png|webp|pdf/;
+    params: {
+      folder: "notes-app",
 
-  const mimeType =
-    fileTypes.test(file.mimetype);
-
-  const extName =
-    fileTypes.test(
-      path.extname(file.originalname)
-        .toLowerCase()
-    );
-
-  if (mimeType && extName) {
-    return cb(null, true);
-
-  } else {
-    cb(
-      new Error(
-        "Only images and pdf files allowed"
-      )
-    );
-  }
-};
+      allowed_formats: [
+        "jpg",
+        "png",
+        "jpeg",
+        "webp"
+      ]
+    }
+  });
 
 const upload = multer({
-  storage,
-  fileFilter
+  storage
 });
 
 module.exports = upload;

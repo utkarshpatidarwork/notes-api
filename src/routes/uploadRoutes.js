@@ -19,7 +19,6 @@ router.post(
   upload.single("file"),
   (req, res) => {
 
-    // Check File Exists
     if (!req.file) {
       return res.status(400).json({
         message: "No file uploaded"
@@ -27,8 +26,10 @@ router.post(
     }
 
     res.status(200).json({
-      message: "File uploaded successfully",
-      file: req.file.filename
+      message:
+        "File uploaded successfully",
+
+      imageUrl: req.file.path
     });
   }
 );
