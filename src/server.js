@@ -19,7 +19,7 @@ const server =
 
 const io = new Server(server, {
   cors: {
-    origin: "*"
+    origin: "https://notes-frontend-6q9f.onrender.com"
   }
 });
 
