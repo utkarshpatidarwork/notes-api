@@ -20,6 +20,11 @@ const noteSchema = new mongoose.Schema(
       trim: true
     },
 
+    category: {
+      type: String,
+      default: "General"
+    },
+
     image: {
       type: String,
       default: ""

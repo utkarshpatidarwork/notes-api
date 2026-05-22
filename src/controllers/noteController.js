@@ -11,7 +11,8 @@ const createNote = asyncHandler(
     const {
       title,
       content,
-     image
+      image,
+      category
     } = req.body;
 
     if (!title || !content) {
@@ -25,7 +26,8 @@ const createNote = asyncHandler(
       user: req.user._id,
       title,
       content,
-      image
+      image,
+      category
     });
 
     res.status(201).json(note);
