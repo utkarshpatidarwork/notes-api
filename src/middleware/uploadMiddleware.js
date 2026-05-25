@@ -26,6 +26,7 @@ const storage =
         "webp",
         "pdf",
         "txt",
+        "doc",
         "docx"
       ]
     }
