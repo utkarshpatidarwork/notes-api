@@ -6,7 +6,8 @@ const router =
 
 const {
   createWorkspace,
-  getWorkspaces
+  getWorkspaces,
+  joinWorkspace
 } = require(
   "../controllers/workspaceController"
 );
@@ -21,5 +22,11 @@ router
   .route("/")
   .post(protect, createWorkspace)
   .get(protect, getWorkspaces);
+
+router.post(
+  "/join",
+  protect,
+  joinWorkspace
+);
 
 module.exports = router;

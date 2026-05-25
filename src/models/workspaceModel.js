@@ -26,7 +26,11 @@ const workspaceSchema =
 
           ref: "User"
         }
-      ]
+      ],
+
+      inviteCode: {
+        type: String
+    },
 
     },
     {
