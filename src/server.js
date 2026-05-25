@@ -4,6 +4,8 @@ dotenv.config();
 const app = require("./app");
 const connectDB = require("./config/db");
 
+const workspaceRoutes = require("./routes/workspaceRoutes");
+
 // Connect Database
 connectDB();
 

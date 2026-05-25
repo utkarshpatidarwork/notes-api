@@ -8,6 +8,13 @@ const noteSchema = new mongoose.Schema(
       ref: "User"
     },
 
+    workspace: {
+      type:
+        mongoose.Schema.Types.ObjectId,
+
+      ref: "Workspace"
+    },
+
     title: {
       type: String,
       required: [true, "Title is required"],

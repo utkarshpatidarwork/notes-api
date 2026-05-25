@@ -12,6 +12,8 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const uploadRoutes = require("./routes/uploadRoutes");
 
+const workspaceRoutes = require("./routes/workspaceRoutes");
+
 const {
   notFound,
   errorHandler
@@ -41,6 +43,8 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api/notes", noteRoutes);
+
+app.use("/api/workspaces", workspaceRoutes);
 
 app.use("/api/users", authRoutes);
 
