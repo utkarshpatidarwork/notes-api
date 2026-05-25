@@ -29,7 +29,7 @@ router.post(
       message:
         "File uploaded successfully",
 
-      imageUrl: req.file.path
+      fileUrl: req.file.path
     });
   }
 );
