@@ -23,7 +23,10 @@ const storage =
         "jpg",
         "png",
         "jpeg",
-        "webp"
+        "webp",
+        "pdf",
+        "txt",
+        "docx"
       ]
     }
   });
