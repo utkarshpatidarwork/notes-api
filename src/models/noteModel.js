@@ -37,10 +37,15 @@ const noteSchema = new mongoose.Schema(
       default: false
     },
 
-    image: {
-      type: String,
-      default: ""
-    }
+    attachments: [
+      {
+        url: String,
+
+        type: String,
+
+        name: String
+      }
+    ],
   },
   {
     timestamps: true

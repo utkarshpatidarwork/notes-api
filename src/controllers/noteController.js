@@ -11,7 +11,7 @@ const createNote = asyncHandler(
     const {
       title,
       content,
-      image,
+      attachments,
       category,
       workspace
     } = req.body;
@@ -27,7 +27,7 @@ const createNote = asyncHandler(
       user: req.user._id,
       title,
       content,
-      image,
+      attachments,
       category,
       workspace
     });
