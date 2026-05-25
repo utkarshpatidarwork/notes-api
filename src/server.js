@@ -21,7 +21,10 @@ const server =
 
 const io = new Server(server, {
   cors: {
-    origin: "https://notes-frontend-6q9f.onrender.com"
+    origin: [
+      "http://localhost:5173",
+      "https://notes-frontend-6q9f.onrender.com"
+    ]
   }
 });
 

@@ -39,11 +39,17 @@ const noteSchema = new mongoose.Schema(
 
     attachments: [
       {
-        url: String,
+        url: {
+          type: String
+        },
 
-        type: String,
+        type: {
+          type: String
+        },
 
-        name: String
+        name: {
+          type: String
+        }
       }
     ],
   },
