@@ -12,7 +12,8 @@ const createNote = asyncHandler(
       title,
       content,
       image,
-      category
+      category,
+      workspace
     } = req.body;
 
     if (!title || !content) {
@@ -27,7 +28,8 @@ const createNote = asyncHandler(
       title,
       content,
       image,
-      category
+      category,
+      workspace
     });
 
     req.app
@@ -71,7 +73,7 @@ const getNotes = asyncHandler(
 
     // Query
     const notes = await Note.find({
-      user: req.user._id,
+      workspace: req.query.workspace,
       ...keyword
     })
       .sort(sortOption)
@@ -80,7 +82,7 @@ const getNotes = asyncHandler(
 
     // Total Count
     const total = await Note.countDocuments({
-      user: req.user._id,
+      workspace: req.query.workspace,
       ...keyword
     });
 
