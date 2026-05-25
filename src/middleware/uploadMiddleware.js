@@ -19,6 +19,8 @@ const storage =
     params: {
       folder: "notes-app",
 
+      resource_type: "auto",
+
       allowed_formats: [
         "jpg",
         "png",
