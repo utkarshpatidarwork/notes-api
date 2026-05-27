@@ -18,9 +18,15 @@ const storage =
 
     params: async (req, file) => {
 
-      const isImage =
+      const isPreviewable =
         file.mimetype.startsWith(
           "image"
+        )
+        
+        ||
+        
+        file.mimetype.includes(
+          "pdf"
         );
 
       return {
@@ -28,7 +34,7 @@ const storage =
         folder: "notes-app",
 
         resource_type:
-          isImage
+          isPreviewable
             ? "image"
             : "raw"
       };
