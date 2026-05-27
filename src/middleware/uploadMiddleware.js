@@ -16,21 +16,22 @@ const storage =
 
     cloudinary,
 
-    params: {
-      folder: "notes-app",
+    params: async (req, file) => {
 
-      resource_type: "auto",
+      const isImage =
+        file.mimetype.startsWith(
+          "image"
+        );
 
-      allowed_formats: [
-        "jpg",
-        "png",
-        "jpeg",
-        "webp",
-        "pdf",
-        "txt",
-        "doc",
-        "docx"
-      ]
+      return {
+
+        folder: "notes-app",
+
+        resource_type:
+          isImage
+            ? "image"
+            : "raw"
+      };
     }
   });
 
