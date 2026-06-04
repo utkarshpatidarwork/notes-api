@@ -5,6 +5,8 @@ const asyncHandler =
 const Workspace =
   require("../models/workspaceModel");
 
+const logActivity = require("../utils/logActivity");
+
 // Create Workspace
 const createWorkspace =
   asyncHandler(async (
@@ -35,6 +37,17 @@ const createWorkspace =
           }
         ]
       });
+
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "WORKSPACE_CREATED",
+      target:
+        workspace.name
+    });
 
     res.status(201).json(
       workspace
@@ -97,6 +110,17 @@ const joinWorkspace =
       workspace.members.push({
         user: req.user._id,
         role: "viewer"
+      });
+
+      await logActivity({
+        workspace:
+          workspace._id,
+        user:
+          req.user._id,
+        action:
+          "MEMBER_JOINED",
+        target:
+          workspace.name
       });
 
       await workspace.save();
@@ -182,6 +206,17 @@ const changeMemberRole =
 
     await workspace.save();
 
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "ROLE_CHANGED",
+      target:
+        role
+    });
+
     res.json({
       message:
         "Role updated"
@@ -251,6 +286,17 @@ const removeMember =
       );
 
     await workspace.save();
+
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "MEMBER_REMOVED",
+      target:
+        memberId
+    });
 
     res.json({
       message:

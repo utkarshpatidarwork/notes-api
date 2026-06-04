@@ -22,6 +22,8 @@ const {
   errorHandler
 } = require("./middleware/errorMiddleware");
 
+const activityRoutes = require("./routes/activityRoutes");
+
 const app = express();
 
 // Middleware
@@ -50,6 +52,8 @@ app.get("/", (req, res) => {
 app.use("/api/notes", noteRoutes);
 
 app.use("/api/workspaces", workspaceRoutes);
+
+app.use("/api/activities", activityRoutes);
 
 app.use("/api/users", authRoutes);
 

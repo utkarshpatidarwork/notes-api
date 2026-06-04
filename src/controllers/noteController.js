@@ -7,6 +7,8 @@ const Note = require("../models/noteModel");
 
 const Workspace = require("../models/workspaceModel");
 
+const logActivity = require("../utils/logActivity");
+
 const { canWriteWorkspace } = require("../middleware/workspacePermissionMiddleware");
 
 // Create Note
@@ -56,6 +58,13 @@ const createNote = asyncHandler(
       .get("io")
       .to(workspace.toString())
       .emit("notesUpdated");
+
+    await logActivity({
+      workspace,
+      user: req.user._id,
+      action: "NOTE_CREATED",
+      target: title
+    });
 
     res.status(201).json(note);
   }
@@ -117,6 +126,10 @@ const getNotes = asyncHandler(
       workspace: req.query.workspace,
       ...keyword
     })
+      .populate(
+        "user",
+        "name"
+      )
       .sort(sortOption)
       .skip(skip)
       .limit(limit);
@@ -214,6 +227,13 @@ const updateNote = asyncHandler(
       .to(workspace.toString())
       .emit("notesUpdated");
 
+    await logActivity({
+      workspace,
+      user: req.user._id,
+      action: "NOTE_UPDATED",
+      target: note.title
+    });
+
     res.status(200).json(updatedNote);
   }
 );
@@ -256,6 +276,13 @@ const deleteNote = asyncHandler(
 
     const workspace =
       note.workspace;
+
+    await logActivity({
+      workspace,
+      user: req.user._id,
+      action: "NOTE_DELETED",
+      target: note.title
+    });
 
     await Note.findByIdAndDelete(
       req.params.id
