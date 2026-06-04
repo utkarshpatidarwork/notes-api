@@ -82,7 +82,8 @@ const getNotes = asyncHandler(
 
         _id: req.query.workspace,
 
-        members: req.user._id
+        "members.user":
+          req.user._id
       });
 
     if (!workspace) {
