@@ -22,10 +22,26 @@ const workspaceSchema =
 
       members: [
         {
-          type:
-            mongoose.Schema.Types.ObjectId,
+          user: {
+            type:
+              mongoose.Schema.Types.ObjectId,
 
-          ref: "User"
+            ref: "User",
+
+            required: true
+          },
+
+          role: {
+            type: String,
+
+            enum: [
+              "owner",
+              "editor",
+              "viewer"
+            ],
+
+            default: "viewer"
+          }
         }
       ],
 

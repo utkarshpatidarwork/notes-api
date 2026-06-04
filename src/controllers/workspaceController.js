@@ -28,7 +28,12 @@ const createWorkspace =
 
         owner: req.user._id,
 
-        members: [req.user._id]
+        members: [
+          {
+            user: req.user._id,
+            role: "owner"
+          }
+        ]
       });
 
     res.status(201).json(
@@ -46,7 +51,8 @@ const getWorkspaces =
     const workspaces =
       await Workspace.find({
 
-        members: req.user._id
+        "members.user":
+          req.user._id
       });
 
     res.status(200).json(
@@ -78,15 +84,20 @@ const joinWorkspace =
       );
     }
 
-    if (
-      !workspace.members.includes(
-        req.user._id
-      )
-    ) {
-
-      workspace.members.push(
-        req.user._id
+    const alreadyMember =
+      workspace.members.some(
+        (member) =>
+          member.user.toString()
+          ===
+          req.user._id.toString()
       );
+
+    if (!alreadyMember) {
+
+      workspace.members.push({
+        user: req.user._id,
+        role: "viewer"
+      });
 
       await workspace.save();
     }
