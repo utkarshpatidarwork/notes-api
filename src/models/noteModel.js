@@ -59,6 +59,22 @@ const noteSchema = new mongoose.Schema(
   }
 );
 
+noteSchema.index({
+  user: 1
+});
+
+noteSchema.index({
+  workspace: 1
+});
+
+noteSchema.index({
+  createdAt: -1
+});
+
+noteSchema.index({
+  category: 1
+});
+
 module.exports = mongoose.model(
   "Note",
   noteSchema

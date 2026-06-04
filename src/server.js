@@ -38,6 +38,19 @@ io.on("connection", (socket) => {
     socket.id
   );
 
+  // Join Workspace Room
+  socket.on(
+    "joinWorkspace",
+    (workspaceId) => {
+
+      socket.join(workspaceId);
+
+      console.log(
+        `Socket ${socket.id} joined workspace ${workspaceId}`
+      );
+    }
+  );
+
   socket.on("disconnect", () => {
 
     console.log(

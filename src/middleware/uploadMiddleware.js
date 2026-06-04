@@ -1,4 +1,3 @@
-//uploadMiddleware.js
 const multer = require("multer");
 
 const {
@@ -11,23 +10,62 @@ const cloudinary = require(
   "../config/cloudinary"
 );
 
+// Allowed File Types
+const allowedMimeTypes = [
+
+  "image/png",
+
+  "image/jpeg",
+
+  "image/jpg",
+
+  "image/webp",
+
+  "application/pdf",
+
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+];
+
+// File Filter
+const fileFilter = (
+  req,
+  file,
+  cb
+) => {
+
+  if (
+    allowedMimeTypes.includes(
+      file.mimetype
+    )
+  ) {
+
+    cb(null, true);
+
+  } else {
+
+    cb(
+      new Error(
+        "Only images, PDF, and DOCX files are allowed"
+      ),
+      false
+    );
+  }
+};
+
 // Cloudinary Storage
 const storage =
   new CloudinaryStorage({
 
     cloudinary,
 
-    params: async (req, file) => {
+    params: async (
+      req,
+      file
+    ) => {
 
-      const isPreviewable =
+      const isImage =
         file.mimetype.startsWith(
           "image"
-        )
-        
-        ||
-        
-        file.mimetype.includes(
-          "pdf"
         );
 
       return {
@@ -35,7 +73,7 @@ const storage =
         folder: "notes-app",
 
         resource_type:
-          isPreviewable
+          isImage
             ? "image"
             : "raw"
       };
@@ -43,7 +81,16 @@ const storage =
   });
 
 const upload = multer({
-  storage
+
+  storage,
+
+  fileFilter,
+
+  limits: {
+
+    fileSize:
+      10 * 1024 * 1024
+  }
 });
 
 module.exports = upload;

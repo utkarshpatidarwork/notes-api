@@ -5,6 +5,8 @@ const asyncHandler = require(
 
 const Note = require("../models/noteModel");
 
+const Workspace = require("../models/workspaceModel");
+
 // Create Note
 const createNote = asyncHandler(
   async (req, res) => {
@@ -35,6 +37,7 @@ const createNote = asyncHandler(
 
     req.app
       .get("io")
+      .to(workspace.toString())
       .emit("notesUpdated");
 
     res.status(201).json(note);
@@ -70,6 +73,25 @@ const getNotes = asyncHandler(
 
     if (req.query.sort === "oldest") {
       sortOption = { createdAt: 1 };
+    }
+
+    // Validate Workspace Access
+    const workspace =
+    
+      await Workspace.findOne({
+
+        _id: req.query.workspace,
+
+        members: req.user._id
+      });
+
+    if (!workspace) {
+
+      res.status(403);
+
+      throw new Error(
+        "Workspace access denied"
+      );
     }
 
     // Query
@@ -142,6 +164,9 @@ const updateNote = asyncHandler(
       throw new Error("Not authorized");
     }
 
+    const workspace =
+      note.workspace;
+
     const updatedNote =
       await Note.findByIdAndUpdate(
         req.params.id,
@@ -153,6 +178,7 @@ const updateNote = asyncHandler(
 
     req.app
       .get("io")
+      .to(workspace.toString())
       .emit("notesUpdated");
 
     res.status(200).json(updatedNote);
@@ -180,12 +206,16 @@ const deleteNote = asyncHandler(
       throw new Error("Not authorized");
     }
 
+    const workspace =
+      note.workspace;
+
     await Note.findByIdAndDelete(
       req.params.id
     );
 
     req.app
       .get("io")
+      .to(workspace.toString())
       .emit("notesUpdated");
 
     res.status(200).json({

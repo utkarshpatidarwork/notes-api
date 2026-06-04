@@ -3,6 +3,8 @@ const express = require("express");
 
 const cors = require("cors");
 
+const helmet = require("helmet");
+
 const path = require("path");
 
 const noteRoutes = require("./routes/noteRoutes");
@@ -23,6 +25,8 @@ const {
 const app = express();
 
 // Middleware
+app.use(helmet());
+
 app.use(cors());
 
 app.use(express.json());
