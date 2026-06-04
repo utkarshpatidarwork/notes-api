@@ -7,6 +7,8 @@ const Note = require("../models/noteModel");
 
 const Workspace = require("../models/workspaceModel");
 
+const { canWriteWorkspace } = require("../middleware/workspacePermissionMiddleware");
+
 // Create Note
 const createNote = asyncHandler(
   async (req, res) => {
@@ -18,6 +20,21 @@ const createNote = asyncHandler(
       category,
       workspace
     } = req.body;
+
+    const canWrite =
+      await canWriteWorkspace(
+        workspace,
+        req.user._id
+      );
+
+    if (!canWrite) {
+
+      res.status(403);
+
+      throw new Error(
+        "You do not have permission to create notes"
+      );
+    }
 
     if (!title || !content) {
       res.status(400);
@@ -157,6 +174,21 @@ const updateNote = asyncHandler(
       throw new Error("Note not found");
     }
 
+    const canWrite =
+      await canWriteWorkspace(
+        note.workspace,
+        req.user._id
+      );
+
+    if (!canWrite) {
+
+      res.status(403);
+
+      throw new Error(
+        "You do not have permission to edit notes"
+      );
+    }
+
     if (
       note.user.toString() !==
       req.user._id.toString()
@@ -197,6 +229,21 @@ const deleteNote = asyncHandler(
     if (!note) {
       res.status(404);
       throw new Error("Note not found");
+    }
+
+    const canWrite =
+      await canWriteWorkspace(
+        note.workspace,
+        req.user._id
+      );
+
+    if (!canWrite) {
+
+      res.status(403);
+
+      throw new Error(
+        "You do not have permission to delete notes"
+      );
     }
 
     if (
