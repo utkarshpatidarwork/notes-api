@@ -163,6 +163,9 @@ const getArchivedNotes =
         workspace:
           req.query.workspace,
 
+        user:
+          req.user._id,
+
         isArchived: true
       })
       .populate(
