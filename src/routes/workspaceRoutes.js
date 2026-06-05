@@ -12,7 +12,8 @@ const {
   changeMemberRole,
   removeMember,
   getWorkspaceMembers,
-  leaveWorkspace
+  leaveWorkspace,
+  deleteWorkspace
 } = require(
   "../controllers/workspaceController"
 );
@@ -56,6 +57,12 @@ router.post(
   "/leave",
   protect,
   leaveWorkspace
+);
+
+router.delete(
+  "/:id",
+  protect,
+  deleteWorkspace
 );
 
 module.exports = router;

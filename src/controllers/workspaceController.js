@@ -1,9 +1,11 @@
 //workspaceController.js
-const asyncHandler =
-  require("express-async-handler");
+const asyncHandler = require("express-async-handler");
 
-const Workspace =
-  require("../models/workspaceModel");
+const Workspace = require("../models/workspaceModel");
+
+const Note = require("../models/noteModel");
+
+const Activity = require("../models/activityModel");
 
 const logActivity = require("../utils/logActivity");
 
@@ -395,6 +397,57 @@ const leaveWorkspace =
     });
   });
 
+const deleteWorkspace =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const workspace =
+      await Workspace.findById(
+        req.params.id
+      );
+
+    if (!workspace) {
+
+      return res.status(404).json({
+        message:
+          "Workspace not found"
+      });
+    }
+
+    if (
+      workspace.owner.toString()
+      !==
+      req.user._id.toString()
+    ) {
+
+      return res.status(403).json({
+        message:
+          "Only owner can delete workspace"
+      });
+    }
+
+    await Note.deleteMany({
+      workspace:
+        workspace._id
+    });
+
+    await Activity.deleteMany({
+      workspace:
+        workspace._id
+    });
+
+    await Workspace.findByIdAndDelete(
+      workspace._id
+    );
+
+    res.json({
+      message:
+        "Workspace deleted successfully"
+    });
+  });
+
 module.exports = {
   createWorkspace,
   getWorkspaces,
@@ -402,5 +455,6 @@ module.exports = {
   changeMemberRole,
   removeMember,
   getWorkspaceMembers,
-  leaveWorkspace
+  leaveWorkspace,
+  deleteWorkspace
 };
