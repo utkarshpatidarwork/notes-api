@@ -438,6 +438,14 @@ const deleteWorkspace =
         workspace._id
     });
 
+    req.app
+      .get("io")
+      .to(workspace._id.toString())
+      .emit(
+        "workspaceDeleted",
+        workspace._id
+      );
+
     await Workspace.findByIdAndDelete(
       workspace._id
     );
