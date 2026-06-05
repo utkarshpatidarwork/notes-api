@@ -334,11 +334,73 @@ const getWorkspaceMembers =
     );
   });
 
+const leaveWorkspace =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const { workspaceId } =
+      req.body;
+
+    const workspace =
+      await Workspace.findById(
+        workspaceId
+      );
+
+    if (!workspace) {
+
+      return res.status(404).json({
+        message:
+          "Workspace not found"
+      });
+    }
+
+    if (
+      workspace.owner.toString()
+      ===
+      req.user._id.toString()
+    ) {
+
+      return res.status(400).json({
+        message:
+          "Owner cannot leave workspace"
+      });
+    }
+
+    workspace.members =
+      workspace.members.filter(
+        (member) =>
+          member.user.toString()
+          !==
+          req.user._id.toString()
+      );
+
+    await workspace.save();
+
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "MEMBER_LEFT",
+      target:
+        workspace.name
+    });
+
+    res.json({
+      message:
+        "Workspace left successfully"
+    });
+  });
+
 module.exports = {
   createWorkspace,
   getWorkspaces,
   joinWorkspace,
   changeMemberRole,
   removeMember,
-  getWorkspaceMembers
+  getWorkspaceMembers,
+  leaveWorkspace
 };
