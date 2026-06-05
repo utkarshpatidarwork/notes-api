@@ -38,6 +38,11 @@ const noteSchema = new mongoose.Schema(
       default: false
     },
 
+    isArchived: {
+      type: Boolean,
+      default: false
+    },
+
     attachments: [
       {
         url: {

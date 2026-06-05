@@ -124,6 +124,7 @@ const getNotes = asyncHandler(
     // Query
     const notes = await Note.find({
       workspace: req.query.workspace,
+      isArchived: false,
       ...keyword
     })
       .populate(
@@ -137,6 +138,7 @@ const getNotes = asyncHandler(
     // Total Count
     const total = await Note.countDocuments({
       workspace: req.query.workspace,
+      isArchived: false,
       ...keyword
     });
 
@@ -148,6 +150,119 @@ const getNotes = asyncHandler(
     });
   }
 );
+
+const getArchivedNotes =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const notes =
+      await Note.find({
+
+        workspace:
+          req.query.workspace,
+
+        isArchived: true
+      })
+      .populate(
+        "user",
+        "name"
+      )
+      .sort({
+        createdAt: -1
+      });
+
+    res.json(notes);
+  });
+
+const restoreNote =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const note =
+      await Note.findById(
+        req.params.id
+      );
+
+    if (!note) {
+
+      res.status(404);
+
+      throw new Error(
+        "Note not found"
+      );
+    }
+
+    note.isArchived = false;
+
+    await note.save();
+
+    await logActivity({
+      workspace:
+        note.workspace,
+
+      user:
+        req.user._id,
+
+      action:
+        "NOTE_RESTORED",
+
+      target:
+        note.title
+    });
+
+    res.json({
+      message:
+        "Note restored"
+    });
+  });
+
+const permanentlyDeleteNote =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const note =
+      await Note.findById(
+        req.params.id
+      );
+
+    if (!note) {
+
+      res.status(404);
+
+      throw new Error(
+        "Note not found"
+      );
+    }
+
+    await logActivity({
+      workspace:
+        note.workspace,
+
+      user:
+        req.user._id,
+
+      action:
+        "NOTE_PERMANENTLY_DELETED",
+
+      target:
+        note.title
+    });
+
+    await Note.findByIdAndDelete(
+      req.params.id
+    );
+
+    res.json({
+      message:
+        "Note permanently deleted"
+    });
+  });
 
 // Get Single Note
 const getSingleNote = asyncHandler(
@@ -280,13 +395,13 @@ const deleteNote = asyncHandler(
     await logActivity({
       workspace,
       user: req.user._id,
-      action: "NOTE_DELETED",
+      action: "NOTE_ARCHIVED",
       target: note.title
     });
 
-    await Note.findByIdAndDelete(
-      req.params.id
-    );
+    note.isArchived = true;
+
+    await note.save();
 
     req.app
       .get("io")
@@ -295,7 +410,7 @@ const deleteNote = asyncHandler(
 
     res.status(200).json({
       message:
-        "Note deleted successfully"
+        "Note moved to trash"
     });
   }
 );
@@ -305,5 +420,8 @@ module.exports = {
   getNotes,
   getSingleNote,
   updateNote,
-  deleteNote
+  deleteNote,
+  getArchivedNotes,
+  restoreNote,
+  permanentlyDeleteNote
 };

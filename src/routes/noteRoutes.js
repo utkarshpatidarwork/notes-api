@@ -6,7 +6,10 @@ const {
   getNotes,
   getSingleNote,
   updateNote,
-  deleteNote
+  deleteNote,
+  getArchivedNotes,
+  restoreNote,
+  permanentlyDeleteNote
 } = require("../controllers/noteController");
 
 const {
@@ -19,6 +22,24 @@ const router = express.Router();
 router.route("/")
   .post(protect, createNote)
   .get(protect, getNotes);
+
+router.get(
+  "/trash",
+  protect,
+  getArchivedNotes
+);
+
+router.put(
+  "/restore/:id",
+  protect,
+  restoreNote
+);
+
+router.delete(
+  "/permanent/:id",
+  protect,
+  permanentlyDeleteNote
+);
 
 router.route("/:id")
   .get(protect, getSingleNote)
