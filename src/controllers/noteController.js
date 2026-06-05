@@ -196,6 +196,19 @@ const restoreNote =
       );
     }
 
+    if (
+      note.user.toString()
+      !==
+      req.user._id.toString()
+    ) {
+
+      res.status(401);
+
+      throw new Error(
+        "Not authorized"
+      );
+    }
+
     note.isArchived = false;
 
     await note.save();
@@ -237,6 +250,19 @@ const permanentlyDeleteNote =
 
       throw new Error(
         "Note not found"
+      );
+    }
+
+    if (
+      note.user.toString()
+      !==
+      req.user._id.toString()
+    ) {
+
+      res.status(401);
+
+      throw new Error(
+        "Not authorized"
       );
     }
 
