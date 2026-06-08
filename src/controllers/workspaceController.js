@@ -328,6 +328,15 @@ const removeMember =
       .emit("membersUpdated");
 
     io.to(workspace._id.toString())
+      .emit(
+        "memberRemoved",
+        {
+          workspaceId,
+          memberId
+        }
+      );
+
+    io.to(workspace._id.toString())
       .emit("activityUpdated");
 
     await logActivity({
