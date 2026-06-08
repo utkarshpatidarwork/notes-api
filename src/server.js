@@ -51,6 +51,18 @@ io.on("connection", (socket) => {
     }
   );
 
+  socket.on(
+    "leaveWorkspace",
+    (workspaceId) => {
+
+      socket.leave(workspaceId);
+
+      console.log(
+        `Socket ${socket.id} left workspace ${workspaceId}`
+      );
+    }
+  );
+
   socket.on("disconnect", () => {
 
     console.log(
