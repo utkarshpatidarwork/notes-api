@@ -58,6 +58,11 @@ const createNote = asyncHandler(
       .get("io")
       .to(workspace.toString())
       .emit("notesUpdated");
+    
+    req.app
+      .get("io")
+      .to(workspace.toString())
+      .emit("activityUpdated");
 
     await logActivity({
       workspace,
@@ -216,6 +221,16 @@ const restoreNote =
 
     await note.save();
 
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("notesUpdated");
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("activityUpdated");
+
     await logActivity({
       workspace:
         note.workspace,
@@ -286,6 +301,16 @@ const permanentlyDeleteNote =
     await Note.findByIdAndDelete(
       req.params.id
     );
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("notesUpdated");
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("activityUpdated");
 
     res.json({
       message:
@@ -371,6 +396,11 @@ const updateNote = asyncHandler(
       .to(workspace.toString())
       .emit("notesUpdated");
 
+    req.app
+      .get("io")
+      .to(workspace.toString())
+      .emit("activityUpdated");
+
     await logActivity({
       workspace,
       user: req.user._id,
@@ -436,6 +466,11 @@ const deleteNote = asyncHandler(
       .get("io")
       .to(workspace.toString())
       .emit("notesUpdated");
+
+    req.app
+      .get("io")
+      .to(workspace.toString())
+      .emit("activityUpdated");
 
     res.status(200).json({
       message:
