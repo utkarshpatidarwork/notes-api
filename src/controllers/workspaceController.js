@@ -18,10 +18,22 @@ const createWorkspace =
 
     const { name } = req.body;
 
-    const inviteCode =
-      Math.random()
-        .toString(36)
-        .substring(2, 8);
+    let inviteCode;
+
+    do {
+
+      inviteCode =
+        Math.random()
+          .toString(36)
+          .substring(2, 8);
+
+    } while (
+
+      await Workspace.findOne({
+        inviteCode
+      })
+
+    );
 
     const workspace =
       await Workspace.create({
@@ -107,31 +119,39 @@ const joinWorkspace =
           req.user._id.toString()
       );
 
-    if (!alreadyMember) {
+    if (alreadyMember) {
 
-      workspace.members.push({
-        user: req.user._id,
-        role: "viewer"
+      return res.status(409).json({
+        message:
+          "Already a member of this workspace"
       });
-
-      await logActivity({
-        workspace:
-          workspace._id,
-        user:
-          req.user._id,
-        action:
-          "MEMBER_JOINED",
-        target:
-          workspace.name
-      });
-
-      await workspace.save();
-
-      const io = req.app.get("io");
-
-      io.to(workspace._id.toString())
-        .emit("membersUpdated");
     }
+
+    workspace.members.push({
+      user: req.user._id,
+      role: "viewer"
+    });
+
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "MEMBER_JOINED",
+      target:
+        workspace.name
+    });
+
+    await workspace.save();
+
+    const io = req.app.get("io");
+
+    io.to(workspace._id.toString())
+      .emit("membersUpdated");
+
+    io.to(workspace._id.toString())
+      .emit("activityUpdated");
 
     res.status(200).json(
       workspace
@@ -218,6 +238,9 @@ const changeMemberRole =
     io.to(workspace._id.toString())
       .emit("membersUpdated");
 
+    io.to(workspace._id.toString())
+      .emit("activityUpdated");
+
     await logActivity({
       workspace:
         workspace._id,
@@ -303,6 +326,9 @@ const removeMember =
 
     io.to(workspace._id.toString())
       .emit("membersUpdated");
+
+    io.to(workspace._id.toString())
+      .emit("activityUpdated");
 
     await logActivity({
       workspace:
@@ -399,6 +425,9 @@ const leaveWorkspace =
 
     io.to(workspace._id.toString())
       .emit("membersUpdated");
+
+    io.to(workspace._id.toString())
+      .emit("activityUpdated");
 
     await logActivity({
       workspace:
