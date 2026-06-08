@@ -1,3 +1,4 @@
+//workspacePermissionMiddleware.js
 const Workspace =
   require("../models/workspaceModel");
 
