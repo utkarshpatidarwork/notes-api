@@ -126,6 +126,11 @@ const joinWorkspace =
       });
 
       await workspace.save();
+
+      const io = req.app.get("io");
+
+      io.to(workspace._id.toString())
+        .emit("membersUpdated");
     }
 
     res.status(200).json(
@@ -208,6 +213,11 @@ const changeMemberRole =
 
     await workspace.save();
 
+    const io = req.app.get("io");
+
+    io.to(workspace._id.toString())
+      .emit("membersUpdated");
+
     await logActivity({
       workspace:
         workspace._id,
@@ -288,6 +298,11 @@ const removeMember =
       );
 
     await workspace.save();
+
+    const io = req.app.get("io");
+
+    io.to(workspace._id.toString())
+      .emit("membersUpdated");
 
     await logActivity({
       workspace:
@@ -379,6 +394,11 @@ const leaveWorkspace =
       );
 
     await workspace.save();
+
+    const io = req.app.get("io");
+
+    io.to(workspace._id.toString())
+      .emit("membersUpdated");
 
     await logActivity({
       workspace:
