@@ -23,10 +23,17 @@ const {
   "../validators/authValidator"
 );
 
+const {
+  authLimiter
+} = require(
+  "../middleware/rateLimitMiddleware"
+);
+
 const router = express.Router();
 
 router.post(
   "/register",
+  authLimiter,
   registerValidation,
   validate,
   registerUser
@@ -34,6 +41,7 @@ router.post(
 
 router.post(
   "/login",
+  authLimiter,
   loginValidation,
   validate,
   loginUser
