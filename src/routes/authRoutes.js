@@ -29,6 +29,20 @@ const {
   "../middleware/rateLimitMiddleware"
 );
 
+const {
+  updateProfile,
+  changePassword
+} = require(
+  "../controllers/authController"
+);
+
+const {
+  updateProfileValidation,
+  changePasswordValidation
+} = require(
+  "../validators/profileValidator"
+);
+
 const router = express.Router();
 
 router.post(
@@ -49,5 +63,21 @@ router.post(
 
 // Protected Route
 router.get("/profile", protect, getProfile);
+
+router.put(
+  "/profile",
+  protect,
+  updateProfileValidation,
+  validate,
+  updateProfile
+);
+
+router.put(
+  "/change-password",
+  protect,
+  changePasswordValidation,
+  validate,
+  changePassword
+);
 
 module.exports = router;
