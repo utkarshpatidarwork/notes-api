@@ -16,28 +16,12 @@ const {
   protect
 } = require("../middleware/authMiddleware");
 
-const validate = require(
-  "../middleware/validationMiddleware"
-);
-
-const {
-  noteValidation
-} = require("../validators/noteValidator");
-
 const router = express.Router();
 
 // Protected Routes
 router.route("/")
-  .post(
-    protect,
-    noteValidation,
-    validate,
-    createNote
-  )
-  .get(
-    protect,
-    getNotes
-  );
+  .post(protect, createNote)
+  .get(protect, getNotes);
 
 router.get(
   "/trash",

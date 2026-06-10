@@ -11,30 +11,11 @@ const {
   protect
 } = require("../middleware/authMiddleware");
 
-const validate = require(
-  "../middleware/validationMiddleware"
-);
-
-const {
-  registerValidation,
-  loginValidation
-} = require("../validators/authValidator");
-
 const router = express.Router();
 
-router.post(
-  "/register",
-  registerValidation,
-  validate,
-  registerUser
-);
+router.post("/register", registerUser);
 
-router.post(
-  "/login",
-  loginValidation,
-  validate,
-  loginUser
-);
+router.post("/login", loginUser);
 
 // Protected Route
 router.get("/profile", protect, getProfile);
