@@ -1,6 +1,8 @@
 //uploadRoutes.js
 const express = require("express");
 
+const multer = require("multer");
+
 const router = express.Router();
 
 const upload = require(
@@ -17,12 +19,42 @@ const {
 router.post(
   "/",
   protect,
-  upload.single("file"),
+  (req, res, next) => {
+
+    upload.single("file")(
+      req,
+      res,
+      function (err) {
+
+        if (
+          err instanceof multer.MulterError
+        ) {
+
+          return res.status(400).json({
+            message:
+              "File exceeds maximum size of 5MB"
+          });
+        }
+
+        if (err) {
+
+          return res.status(400).json({
+            message: err.message
+          });
+        }
+
+        next();
+      }
+    );
+  },
+
   (req, res) => {
 
     if (!req.file) {
+
       return res.status(400).json({
-        message: "No file uploaded"
+        message:
+          "No file uploaded"
       });
     }
 
@@ -30,7 +62,8 @@ router.post(
       message:
         "File uploaded successfully",
 
-      fileUrl: req.file.path
+      fileUrl:
+        req.file.path
     });
   }
 );

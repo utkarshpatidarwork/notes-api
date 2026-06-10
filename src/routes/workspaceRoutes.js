@@ -24,14 +24,35 @@ const {
   "../middleware/authMiddleware"
 );
 
+const validate = require(
+  "../middleware/validationMiddleware"
+);
+
+const {
+  createWorkspaceValidation,
+  joinWorkspaceValidation
+} = require(
+  "../validators/workspaceValidator"
+);
+
 router
   .route("/")
-  .post(protect, createWorkspace)
-  .get(protect, getWorkspaces);
+  .post(
+    protect,
+    createWorkspaceValidation,
+    validate,
+    createWorkspace
+  )
+  .get(
+    protect,
+    getWorkspaces
+  );
 
 router.post(
   "/join",
   protect,
+  joinWorkspaceValidation,
+  validate,
   joinWorkspace
 );
 

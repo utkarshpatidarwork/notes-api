@@ -1,5 +1,7 @@
 const multer = require("multer");
 
+const path = require("path");
+
 const {
   CloudinaryStorage
 } = require(
@@ -26,6 +28,15 @@ const allowedMimeTypes = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ];
 
+const allowedExtensions = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".pdf",
+  ".docx"
+];
+
 // File Filter
 const fileFilter = (
   req,
@@ -33,23 +44,35 @@ const fileFilter = (
   cb
 ) => {
 
-  if (
+  const extension =
+    path.extname(
+      file.originalname
+    ).toLowerCase();
+
+  const validMime =
     allowedMimeTypes.includes(
       file.mimetype
-    )
+    );
+
+  const validExtension =
+    allowedExtensions.includes(
+      extension
+    );
+
+  if (
+    validMime &&
+    validExtension
   ) {
 
-    cb(null, true);
-
-  } else {
-
-    cb(
-      new Error(
-        "Only images, PDF, and DOCX files are allowed"
-      ),
-      false
-    );
+    return cb(null, true);
   }
+
+  cb(
+    new Error(
+      "Only PNG, JPG, JPEG, WEBP, PDF and DOCX files are allowed"
+    ),
+    false
+  );
 };
 
 // Cloudinary Storage
@@ -89,7 +112,7 @@ const upload = multer({
   limits: {
 
     fileSize:
-      10 * 1024 * 1024
+      5 * 1024 * 1024
   }
 });
 
