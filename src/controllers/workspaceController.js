@@ -514,6 +514,150 @@ const deleteWorkspace =
     });
   });
 
+const transferOwnership =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const {
+      workspaceId,
+      memberId
+    } = req.body;
+
+    const workspace =
+      await Workspace.findById(
+        workspaceId
+      );
+
+    if (!workspace) {
+
+      return res.status(404).json({
+        message:
+          "Workspace not found"
+      });
+    }
+
+    if (
+      workspace.owner.toString()
+      !==
+      req.user._id.toString()
+    ) {
+
+      return res.status(403).json({
+        message:
+          "Only owner can transfer ownership"
+      });
+    }
+
+    const newOwner =
+      workspace.members.find(
+        (member) =>
+          member.user.toString()
+          === memberId
+      );
+
+    if (!newOwner) {
+
+      return res.status(404).json({
+        message:
+          "Member not found"
+      });
+    }
+
+    const currentOwner =
+      workspace.members.find(
+        (member) =>
+          member.user.toString()
+          ===
+          req.user._id.toString()
+      );
+
+    currentOwner.role =
+      "editor";
+
+    newOwner.role =
+      "owner";
+
+    workspace.owner =
+      memberId;
+
+    await workspace.save();
+
+    const io =
+      req.app.get("io");
+
+    io.to(
+      workspace._id.toString()
+    ).emit(
+      "membersUpdated"
+    );
+
+    io.to(
+      workspace._id.toString()
+    ).emit(
+      "activityUpdated"
+    );
+
+    res.json({
+      message:
+        "Ownership transferred"
+    });
+  });
+
+const renameWorkspace =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const {
+      workspaceId,
+      name
+    } = req.body;
+
+    const workspace =
+      await Workspace.findById(
+        workspaceId
+      );
+
+    if (!workspace) {
+
+      return res.status(404).json({
+        message:
+          "Workspace not found"
+      });
+    }
+
+    if (
+      String(workspace.owner)
+      !==
+      String(req.user._id)
+    ) {
+
+      return res.status(403).json({
+        message:
+          "Only owner can rename workspace"
+      });
+    }
+
+    workspace.name = name;
+
+    await workspace.save();
+
+    req.app
+      .get("io")
+      .to(workspace._id.toString())
+      .emit(
+        "workspaceRenamed"
+      );
+
+    res.json({
+      message:
+        "Workspace renamed successfully"
+    });
+  });
+
 module.exports = {
   createWorkspace,
   getWorkspaces,
@@ -522,5 +666,7 @@ module.exports = {
   removeMember,
   getWorkspaceMembers,
   leaveWorkspace,
-  deleteWorkspace
+  deleteWorkspace,
+  transferOwnership,
+  renameWorkspace
 };

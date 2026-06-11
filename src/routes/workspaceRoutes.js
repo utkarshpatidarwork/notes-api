@@ -13,7 +13,9 @@ const {
   removeMember,
   getWorkspaceMembers,
   leaveWorkspace,
-  deleteWorkspace
+  deleteWorkspace,
+  transferOwnership,
+  renameWorkspace
 } = require(
   "../controllers/workspaceController"
 );
@@ -67,6 +69,18 @@ router.put(
   "/role",
   protect,
   changeMemberRole
+);
+
+router.put(
+  "/rename",
+  protect,
+  renameWorkspace
+);
+
+router.put(
+  "/transfer-owner",
+  protect,
+  transferOwnership
 );
 
 router.delete(

@@ -4,6 +4,18 @@ const bcrypt = require("bcryptjs");
 
 const generateToken = require("../utils/generateToken");
 
+const Workspace =
+  require("../models/workspaceModel");
+
+const Note =
+  require("../models/noteModel");
+
+const crypto =
+  require("crypto");
+
+const sendEmail =
+  require("../utils/sendEmail");
+
 // Register User
 const registerUser = async (req, res) => {
   try {
@@ -223,11 +235,247 @@ const changePassword =
       });
     }
   };
+  
+const deleteAccount =
+  async (req, res) => {
+
+    const userId =
+      req.user._id;
+
+    const io =
+      req.app.get("io");
+
+    // Delete owned workspaces
+
+    const ownedWorkspaces =
+      await Workspace.find({
+        owner: userId
+      });
+
+    const workspaceIds =
+      ownedWorkspaces.map(
+        (workspace) =>
+          workspace._id
+      );
+
+    await Note.deleteMany({
+      workspace: {
+        $in: workspaceIds
+      }
+    });
+
+    const memberWorkspaces =
+      await Workspace.find({
+        "members.user": userId
+      })
+      .select("_id");
+
+    await Workspace.updateMany(
+      {},
+      {
+        $pull: {
+          members: {
+            user: userId
+          }
+        }
+      }
+    );
+
+    for (
+      const workspace
+      of memberWorkspaces
+    ) {
+
+      io.to(
+        workspace._id.toString()
+      ).emit(
+        "memberRemoved",
+        {
+          workspaceId:
+            workspace._id,
+          memberId:
+            userId
+        }
+      );
+
+      io.to(
+        workspace._id.toString()
+      ).emit(
+        "membersUpdated"
+      );
+    }
+
+    await Workspace.deleteMany({
+      owner: userId
+    });
+
+    // Delete personal notes
+
+    await Note.deleteMany({
+      user: userId
+    });
+
+    // Delete user
+
+    await User.findByIdAndDelete(
+      userId
+    );
+
+    res.json({
+      message:
+        "Account deleted successfully"
+    });
+  };
+
+const forgotPassword =
+  async (req, res) => {
+
+    try {
+
+      const { email } =
+        req.body;
+
+      const user =
+        await User.findOne({
+          email
+        });
+
+      if (!user) {
+
+        return res.status(404).json({
+          message:
+            "User not found"
+        });
+      }
+
+      const resetToken =
+        crypto
+          .randomBytes(32)
+          .toString("hex");
+
+      const hashedToken =
+        crypto
+          .createHash("sha256")
+          .update(resetToken)
+          .digest("hex");
+
+      user.resetPasswordToken =
+        hashedToken;
+
+      user.resetPasswordExpire =
+        Date.now()
+        +
+        15 * 60 * 1000;
+
+      await user.save();
+
+      const resetUrl =
+        `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+      await sendEmail(
+        user.email,
+        "Password Reset",
+        `
+          <h2>Password Reset</h2>
+
+          <p>
+            Click the link below:
+          </p>
+
+          <a href="${resetUrl}">
+            Reset Password
+          </a>
+
+          <p>
+            Expires in 15 minutes.
+          </p>
+        `
+      );
+
+      res.json({
+        message:
+          "Reset email sent"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        message:
+          error.message
+      });
+    }
+  };
+
+const resetPassword =
+  async (req, res) => {
+
+    try {
+
+      const hashedToken =
+        crypto
+          .createHash("sha256")
+          .update(
+            req.params.token
+          )
+          .digest("hex");
+
+      const user =
+        await User.findOne({
+          resetPasswordToken:
+            hashedToken,
+
+          resetPasswordExpire:
+            {
+              $gt: Date.now()
+            }
+        });
+
+      if (!user) {
+
+        return res.status(400).json({
+          message:
+            "Invalid or expired token"
+        });
+      }
+
+      const salt =
+        await bcrypt.genSalt(10);
+
+      user.password =
+        await bcrypt.hash(
+          req.body.password,
+          salt
+        );
+
+      user.resetPasswordToken =
+        undefined;
+
+      user.resetPasswordExpire =
+        undefined;
+
+      await user.save();
+
+      res.json({
+        message:
+          "Password reset successful"
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        message:
+          error.message
+      });
+    }
+  };
 
 module.exports = {
   registerUser,
   loginUser,
   getProfile,
   updateProfile,
-  changePassword
+  changePassword,
+  deleteAccount,
+  forgotPassword,
+  resetPassword
 };

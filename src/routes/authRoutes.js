@@ -4,7 +4,9 @@ const express = require("express");
 const {
   registerUser,
   loginUser,
-  getProfile
+  getProfile,
+  forgotPassword,
+  resetPassword
 } = require("../controllers/authController");
 
 const {
@@ -31,7 +33,8 @@ const {
 
 const {
   updateProfile,
-  changePassword
+  changePassword,
+  deleteAccount
 } = require(
   "../controllers/authController"
 );
@@ -61,6 +64,18 @@ router.post(
   loginUser
 );
 
+router.post(
+  "/forgot-password",
+  authLimiter,
+  forgotPassword
+);
+
+router.post(
+  "/reset-password/:token",
+  authLimiter,
+  resetPassword
+);
+
 // Protected Route
 router.get("/profile", protect, getProfile);
 
@@ -78,6 +93,12 @@ router.put(
   changePasswordValidation,
   validate,
   changePassword
+);
+
+router.delete(
+  "/account",
+  protect,
+  deleteAccount
 );
 
 module.exports = router;
