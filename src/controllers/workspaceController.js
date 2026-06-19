@@ -80,11 +80,39 @@ const getWorkspaces =
 
         "members.user":
           req.user._id
-      });
+      })
+      .populate(
+        "owner",
+        "name email"
+      )
+      .lean();
+
+    const workspacesWithCounts =
+      await Promise.all(
+        workspaces.map(
+          async (workspace) => {
+
+            const noteCount =
+              await Note.countDocuments({
+                workspace:
+                  workspace._id,
+                isArchived: false
+              });
+
+            return {
+              ...workspace,
+              noteCount,
+              memberCount:
+                workspace.members.length
+            };
+          }
+        )
+      );
 
     res.status(200).json(
-      workspaces
+      workspacesWithCounts
     );
+
   });
 
 // Join Workspace
@@ -174,6 +202,9 @@ const changeMemberRole =
     const workspace =
       await Workspace.findById(
         workspaceId
+      ).populate(
+        "members.user",
+        "name"
       );
 
     if (!workspace) {
@@ -187,7 +218,7 @@ const changeMemberRole =
     const owner =
       workspace.members.find(
         (member) =>
-          member.user.toString()
+          member.user._id.toString()
           ===
           req.user._id.toString()
           &&
@@ -205,7 +236,7 @@ const changeMemberRole =
     const member =
       workspace.members.find(
         (member) =>
-          member.user.toString()
+          member.user._id.toString()
           === memberId
       );
 
@@ -218,7 +249,7 @@ const changeMemberRole =
     }
 
     if (
-      member.user.toString()
+      member.user._id.toString()
       ===
       workspace.owner.toString()
     ) {
@@ -249,7 +280,7 @@ const changeMemberRole =
       action:
         "ROLE_CHANGED",
       target:
-        role
+        `${member.user.name} → ${role}`
     });
 
     res.json({
@@ -273,6 +304,9 @@ const removeMember =
     const workspace =
       await Workspace.findById(
         workspaceId
+      ).populate(
+        "members.user",
+        "name"
       );
 
     if (!workspace) {
@@ -286,7 +320,7 @@ const removeMember =
     const owner =
       workspace.members.find(
         (member) =>
-          member.user.toString()
+          member.user._id.toString()
           ===
           req.user._id.toString()
           &&
@@ -313,10 +347,17 @@ const removeMember =
       });
     }
 
+    const removedMember =
+      workspace.members.find(
+        (member) =>
+          member.user._id.toString()
+          === memberId
+      );
+
     workspace.members =
       workspace.members.filter(
         (member) =>
-          member.user.toString()
+          member.user._id.toString()
           !== memberId
       );
 
@@ -347,7 +388,8 @@ const removeMember =
       action:
         "MEMBER_REMOVED",
       target:
-        memberId
+        removedMember?.user?.name
+        || "Unknown Member"
     });
 
     res.json({
@@ -528,6 +570,9 @@ const transferOwnership =
     const workspace =
       await Workspace.findById(
         workspaceId
+      ).populate(
+        "members.user",
+        "name"
       );
 
     if (!workspace) {
@@ -553,7 +598,7 @@ const transferOwnership =
     const newOwner =
       workspace.members.find(
         (member) =>
-          member.user.toString()
+          member.user._id.toString()
           === memberId
       );
 
@@ -568,7 +613,7 @@ const transferOwnership =
     const currentOwner =
       workspace.members.find(
         (member) =>
-          member.user.toString()
+          member.user._id.toString()
           ===
           req.user._id.toString()
       );
@@ -583,6 +628,17 @@ const transferOwnership =
       memberId;
 
     await workspace.save();
+
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "OWNERSHIP_TRANSFERRED",
+      target:
+        newOwner.user.name
+    });
 
     const io =
       req.app.get("io");
@@ -613,7 +669,8 @@ const renameWorkspace =
 
     const {
       workspaceId,
-      name
+      name,
+      description
     } = req.body;
 
     const workspace =
@@ -641,9 +698,26 @@ const renameWorkspace =
       });
     }
 
-    workspace.name = name;
+    workspace.name =
+      name?.trim()
+      || workspace.name;
+
+    workspace.description =
+      description?.trim()
+      || "";
 
     await workspace.save();
+
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "WORKSPACE_RENAMED",
+      target:
+        workspace.name
+    });
 
     req.app
       .get("io")
@@ -654,7 +728,9 @@ const renameWorkspace =
 
     res.json({
       message:
-        "Workspace renamed successfully"
+        "Workspace updated successfully",
+
+        workspace
     });
   });
 
