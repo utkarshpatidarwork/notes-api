@@ -1,4 +1,4 @@
-//profileValidators
+//profileValidators.js
 const {
   body
 } = require(

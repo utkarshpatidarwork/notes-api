@@ -1,3 +1,4 @@
+//sendEmail.js
 const { Resend } =
   require("resend");
 
