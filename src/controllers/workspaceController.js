@@ -63,8 +63,16 @@ const createWorkspace =
         workspace.name
     });
 
+    const populatedWorkspace =
+      await Workspace.findById(
+        workspace._id
+      ).populate(
+        "owner",
+        "name email"
+      );
+
     res.status(201).json(
-      workspace
+      populatedWorkspace
     );
   });
 
@@ -181,8 +189,16 @@ const joinWorkspace =
     io.to(workspace._id.toString())
       .emit("activityUpdated");
 
+    const populatedWorkspace =
+      await Workspace.findById(
+        workspace._id
+      ).populate(
+        "owner",
+        "name email"
+      );
+
     res.status(200).json(
-      workspace
+      populatedWorkspace
     );
   });
 
