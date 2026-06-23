@@ -58,6 +58,26 @@ const noteSchema = new mongoose.Schema(
         }
       }
     ],
+
+    versions: [
+      {
+        title: String,
+
+        content: String,
+
+        updatedBy: {
+          type:
+            mongoose.Schema.Types.ObjectId,
+
+          ref: "User"
+        },
+
+        updatedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
   },
   {
     timestamps: true

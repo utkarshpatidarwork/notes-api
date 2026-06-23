@@ -168,6 +168,8 @@ const joinWorkspace =
       role: "viewer"
     });
 
+    await workspace.save();
+
     await logActivity({
       workspace:
         workspace._id,
@@ -178,8 +180,6 @@ const joinWorkspace =
       target:
         workspace.name
     });
-
-    await workspace.save();
 
     const io = req.app.get("io");
 
@@ -280,14 +280,6 @@ const changeMemberRole =
 
     await workspace.save();
 
-    const io = req.app.get("io");
-
-    io.to(workspace._id.toString())
-      .emit("membersUpdated");
-
-    io.to(workspace._id.toString())
-      .emit("activityUpdated");
-
     await logActivity({
       workspace:
         workspace._id,
@@ -298,6 +290,14 @@ const changeMemberRole =
       target:
         `${member.user.name} → ${role}`
     });
+
+    const io = req.app.get("io");
+
+    io.to(workspace._id.toString())
+      .emit("membersUpdated");
+
+    io.to(workspace._id.toString())
+      .emit("activityUpdated");
 
     res.json({
       message:
@@ -379,6 +379,18 @@ const removeMember =
 
     await workspace.save();
 
+    await logActivity({
+      workspace:
+        workspace._id,
+      user:
+        req.user._id,
+      action:
+        "MEMBER_REMOVED",
+      target:
+        removedMember?.user?.name
+        || "Unknown Member"
+    });
+
     const io = req.app.get("io");
 
     io.to(workspace._id.toString())
@@ -396,18 +408,6 @@ const removeMember =
     io.to(workspace._id.toString())
       .emit("activityUpdated");
 
-    await logActivity({
-      workspace:
-        workspace._id,
-      user:
-        req.user._id,
-      action:
-        "MEMBER_REMOVED",
-      target:
-        removedMember?.user?.name
-        || "Unknown Member"
-    });
-
     res.json({
       message:
         "Member removed"
@@ -422,20 +422,25 @@ const getWorkspaceMembers =
   ) => {
 
     const workspace =
-      await Workspace
-        .findById(
-          req.params.id
-        )
-        .populate(
-          "members.user",
-          "name email"
-        );
+      await Workspace.findOne({
+
+        _id:
+          req.params.id,
+
+        "members.user":
+          req.user._id
+
+      })
+      .populate(
+        "members.user",
+        "name email"
+      );
 
     if (!workspace) {
 
       return res.status(404).json({
         message:
-          "Workspace not found"
+          "Workspace not found or access denied"
       });
     }
 
@@ -488,14 +493,6 @@ const leaveWorkspace =
 
     await workspace.save();
 
-    const io = req.app.get("io");
-
-    io.to(workspace._id.toString())
-      .emit("membersUpdated");
-
-    io.to(workspace._id.toString())
-      .emit("activityUpdated");
-
     await logActivity({
       workspace:
         workspace._id,
@@ -506,6 +503,14 @@ const leaveWorkspace =
       target:
         workspace.name
     });
+
+    const io = req.app.get("io");
+
+    io.to(workspace._id.toString())
+      .emit("membersUpdated");
+
+    io.to(workspace._id.toString())
+      .emit("activityUpdated");
 
     res.json({
       message:

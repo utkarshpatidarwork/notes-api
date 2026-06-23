@@ -54,6 +54,13 @@ const createNote = asyncHandler(
       workspace
     });
 
+    await logActivity({
+      workspace,
+      user: req.user._id,
+      action: "NOTE_CREATED",
+      target: title
+    });
+
     req.app
       .get("io")
       .to(workspace.toString())
@@ -63,13 +70,6 @@ const createNote = asyncHandler(
       .get("io")
       .to(workspace.toString())
       .emit("activityUpdated");
-
-    await logActivity({
-      workspace,
-      user: req.user._id,
-      action: "NOTE_CREATED",
-      target: title
-    });
 
     res.status(201).json(note);
   }
@@ -89,10 +89,20 @@ const getNotes = asyncHandler(
     // Search
     const keyword = req.query.keyword
       ? {
-          title: {
-            $regex: req.query.keyword,
-            $options: "i"
-          }
+          $or: [
+            {
+              title: {
+                $regex: req.query.keyword,
+                $options: "i"
+              }
+            },
+            {
+              content: {
+                $regex: req.query.keyword,
+                $options: "i"
+              }
+            }
+          ]
         }
       : {};
 
@@ -162,14 +172,49 @@ const getArchivedNotes =
     res
   ) => {
 
+    const workspace =
+      await Workspace.findOne({
+
+        _id:
+          req.query.workspace,
+
+        "members.user":
+          req.user._id
+      });
+
+    if (!workspace) {
+
+      res.status(403);
+
+      throw new Error(
+        "Workspace access denied"
+      );
+    }
+
+    const member =
+      workspace.members.find(
+        (m) =>
+          m.user.toString()
+          ===
+          req.user._id.toString()
+      );
+
+    if (
+      member.role === "viewer"
+    ) {
+
+      res.status(403);
+
+      throw new Error(
+        "You do not have permission to view trash"
+      );
+    }
+
     const notes =
       await Note.find({
 
         workspace:
           req.query.workspace,
-
-        user:
-          req.user._id,
 
         isArchived: true
       })
@@ -204,32 +249,24 @@ const restoreNote =
       );
     }
 
-    if (
-      note.user.toString()
-      !==
-      req.user._id.toString()
-    ) {
+    const canWrite =
+      await canWriteWorkspace(
+        note.workspace,
+        req.user._id
+      );
 
-      res.status(401);
+    if (!canWrite) {
+
+      res.status(403);
 
       throw new Error(
-        "Not authorized"
+        "You do not have permission to restore notes"
       );
     }
 
     note.isArchived = false;
 
     await note.save();
-
-    req.app
-      .get("io")
-      .to(note.workspace.toString())
-      .emit("notesUpdated");
-
-    req.app
-      .get("io")
-      .to(note.workspace.toString())
-      .emit("activityUpdated");
 
     await logActivity({
       workspace:
@@ -245,9 +282,132 @@ const restoreNote =
         note.title
     });
 
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("notesUpdated");
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("trashUpdated");
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("activityUpdated");
+
     res.json({
       message:
         "Note restored"
+    });
+  });
+
+const restoreVersion =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const note =
+      await Note.findById(
+        req.params.id
+      );
+
+    if (!note) {
+
+      res.status(404);
+
+      throw new Error(
+        "Note not found"
+      );
+    }
+
+    const canWrite =
+      await canWriteWorkspace(
+        note.workspace,
+        req.user._id
+      );
+
+    if (!canWrite) {
+
+      res.status(403);
+
+      throw new Error(
+        "You do not have permission to restore versions"
+      );
+    }
+
+    const {
+      versionIndex
+    } = req.body;
+
+    const version =
+      note.versions[
+        versionIndex
+      ];
+
+    if (!version) {
+
+      res.status(404);
+
+      throw new Error(
+        "Version not found"
+      );
+    }
+
+    note.versions.push({
+      title:
+        note.title,
+
+      content:
+        note.content,
+
+      updatedBy:
+        req.user._id
+    });
+
+    if (
+      note.versions.length > 50
+    ) {
+      note.versions.shift();
+    }
+
+    note.title =
+      version.title;
+
+    note.content =
+      version.content;
+
+    await note.save();
+
+    await logActivity({
+      workspace:
+        note.workspace,
+
+      user:
+        req.user._id,
+
+      action:
+        "NOTE_VERSION_RESTORED",
+
+      target:
+        note.title
+    });
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("notesUpdated");
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
+      .emit("activityUpdated");
+
+    res.json({
+      message:
+        "Version restored"
     });
   });
 
@@ -271,16 +431,29 @@ const permanentlyDeleteNote =
       );
     }
 
+    const workspace =
+      await Workspace.findById(
+        note.workspace
+      );
+
+    const member =
+      workspace.members.find(
+        (m) =>
+          m.user.toString()
+          ===
+          req.user._id.toString()
+      );
+
     if (
-      note.user.toString()
-      !==
-      req.user._id.toString()
+      !member
+      ||
+      member.role !== "owner"
     ) {
 
-      res.status(401);
+      res.status(403);
 
       throw new Error(
-        "Not authorized"
+        "Only workspace owner can permanently delete notes"
       );
     }
 
@@ -310,6 +483,11 @@ const permanentlyDeleteNote =
     req.app
       .get("io")
       .to(note.workspace.toString())
+      .emit("trashUpdated");
+
+    req.app
+      .get("io")
+      .to(note.workspace.toString())
       .emit("activityUpdated");
 
     res.json({
@@ -331,17 +509,76 @@ const getSingleNote = asyncHandler(
       throw new Error("Note not found");
     }
 
-    if (
-      note.user.toString() !==
-      req.user._id.toString()
-    ) {
-      res.status(401);
-      throw new Error("Not authorized");
+    const workspace =
+      await Workspace.findOne({
+
+        _id:
+          note.workspace,
+
+        "members.user":
+          req.user._id
+      });
+
+    if (!workspace) {
+
+      res.status(403);
+
+      throw new Error(
+        "Workspace access denied"
+      );
     }
 
     res.status(200).json(note);
   }
 );
+
+const getNoteVersions =
+  asyncHandler(async (
+    req,
+    res
+  ) => {
+
+    const note =
+      await Note.findById(
+        req.params.id
+      )
+      .populate(
+        "versions.updatedBy",
+        "name"
+      );
+
+    if (!note) {
+
+      res.status(404);
+
+      throw new Error(
+        "Note not found"
+      );
+    }
+
+    const workspace =
+      await Workspace.findOne({
+
+        _id:
+          note.workspace,
+
+        "members.user":
+          req.user._id
+      });
+
+    if (!workspace) {
+
+      res.status(403);
+
+      throw new Error(
+        "Workspace access denied"
+      );
+    }
+
+    res.status(200).json(
+      note.versions
+    );
+  });
 
 // Update Note
 const updateNote = asyncHandler(
@@ -371,16 +608,44 @@ const updateNote = asyncHandler(
       );
     }
 
-    if (
-      note.user.toString() !==
-      req.user._id.toString()
-    ) {
-      res.status(401);
-      throw new Error("Not authorized");
-    }
-
     const workspace =
       note.workspace;
+
+    const titleChanged =
+      req.body.title !== undefined
+      &&
+      req.body.title !== note.title;
+
+    const contentChanged =
+      req.body.content !== undefined
+      &&
+      req.body.content !== note.content;
+
+    if (
+      titleChanged
+      ||
+      contentChanged
+    ) {
+
+      note.versions.push({
+        title:
+          note.title,
+
+        content:
+          note.content,
+
+        updatedBy:
+          req.user._id
+      });
+
+      if (
+        note.versions.length > 50
+      ) {
+        note.versions.shift();
+      }
+
+      await note.save();
+    }
 
     const updatedNote =
       await Note.findByIdAndUpdate(
@@ -391,6 +656,13 @@ const updateNote = asyncHandler(
         }
       );
 
+    await logActivity({
+      workspace,
+      user: req.user._id,
+      action: "NOTE_UPDATED",
+      target: note.title
+    });
+
     req.app
       .get("io")
       .to(workspace.toString())
@@ -400,13 +672,6 @@ const updateNote = asyncHandler(
       .get("io")
       .to(workspace.toString())
       .emit("activityUpdated");
-
-    await logActivity({
-      workspace,
-      user: req.user._id,
-      action: "NOTE_UPDATED",
-      target: note.title
-    });
 
     res.status(200).json(updatedNote);
   }
@@ -440,14 +705,6 @@ const deleteNote = asyncHandler(
       );
     }
 
-    if (
-      note.user.toString() !==
-      req.user._id.toString()
-    ) {
-      res.status(401);
-      throw new Error("Not authorized");
-    }
-
     const workspace =
       note.workspace;
 
@@ -470,6 +727,11 @@ const deleteNote = asyncHandler(
     req.app
       .get("io")
       .to(workspace.toString())
+      .emit("trashUpdated");
+
+    req.app
+      .get("io")
+      .to(workspace.toString())
       .emit("activityUpdated");
 
     res.status(200).json({
@@ -487,5 +749,7 @@ module.exports = {
   deleteNote,
   getArchivedNotes,
   restoreNote,
-  permanentlyDeleteNote
+  permanentlyDeleteNote,
+  getNoteVersions,
+  restoreVersion
 };

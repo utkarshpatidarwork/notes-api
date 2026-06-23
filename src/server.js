@@ -5,8 +5,6 @@ dotenv.config();
 const app = require("./app");
 const connectDB = require("./config/db");
 
-const workspaceRoutes = require("./routes/workspaceRoutes");
-
 // Connect Database
 connectDB();
 
@@ -33,21 +31,11 @@ app.set("io", io);
 
 io.on("connection", (socket) => {
 
-  console.log(
-    "User Connected:",
-    socket.id
-  );
-
-  // Join Workspace Room
   socket.on(
     "joinWorkspace",
     (workspaceId) => {
 
       socket.join(workspaceId);
-
-      console.log(
-        `Socket ${socket.id} joined workspace ${workspaceId}`
-      );
     }
   );
 
@@ -56,20 +44,9 @@ io.on("connection", (socket) => {
     (workspaceId) => {
 
       socket.leave(workspaceId);
-
-      console.log(
-        `Socket ${socket.id} left workspace ${workspaceId}`
-      );
     }
   );
 
-  socket.on("disconnect", () => {
-
-    console.log(
-      "User Disconnected:",
-      socket.id
-    );
-  });
 });
 
 server.listen(PORT, () => {

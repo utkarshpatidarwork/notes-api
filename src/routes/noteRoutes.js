@@ -9,7 +9,9 @@ const {
   deleteNote,
   getArchivedNotes,
   restoreNote,
-  permanentlyDeleteNote
+  permanentlyDeleteNote,
+  getNoteVersions,
+  restoreVersion
 } = require("../controllers/noteController");
 
 const {
@@ -58,6 +60,18 @@ router.delete(
   "/permanent/:id",
   protect,
   permanentlyDeleteNote
+);
+
+router.get(
+  "/versions/:id",
+  protect,
+  getNoteVersions
+);
+
+router.put(
+  "/restore-version/:id",
+  protect,
+  restoreVersion
 );
 
 router.route("/:id")
